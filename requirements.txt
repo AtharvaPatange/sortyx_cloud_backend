@@ -1,3 +1,7 @@
+# Core Packaging Tools
+setuptools>=65.5.0
+wheel
+
 # Core Web Framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
