@@ -18,6 +18,7 @@ numpy>=1.26.0
 ultralytics==8.0.231
 opencv-python-headless==4.8.1.78
 pillow==10.1.0
+torch
 
 # Google Gemini AI (New SDK)
 google-genai==0.2.2

@@ -32,11 +32,16 @@ from fastapi import Request
 # AI/ML Libraries (CPU-optimized)
 import cv2
 import numpy as np
+import torch
 from ultralytics import YOLO
+from ultralytics.nn import tasks
 from google import genai
 from google.genai import types
 from PIL import Image
 import qrcode
+
+# Allow YOLO PoseModel class to be deserialized safely
+torch.serialization.add_safe_globals([tasks.PoseModel])
 
 # Environment and Configuration
 from dotenv import load_dotenv
