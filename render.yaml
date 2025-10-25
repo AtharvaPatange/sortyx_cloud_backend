@@ -1,0 +1,28 @@
+# Render.com Deployment Configuration
+# https://render.com
+
+# Build Command (run during deployment)
+build:
+  - pip install --upgrade pip
+  - pip install -r requirements.txt
+
+# Environment: Python 3.11
+python_version: 3.11
+
+# Service Type: Web Service
+service: web
+
+# Start Command
+start: uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1
+
+# Health Check Endpoint
+healthCheckPath: /health
+
+# Environment Variables (set these in Render dashboard)
+env:
+  - key: GEMINI_API_KEY
+    sync: false  # Set manually in Render dashboard
+  - key: PYTHON_VERSION
+    value: 3.11.0
+  - key: PORT
+    value: 8000  # Render will override this automatically
