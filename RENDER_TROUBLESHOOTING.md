@@ -2,6 +2,31 @@
 
 ## 🚨 Common Render Deployment Failures & Solutions
 
+### ❌ Problem 0: Python 3.13 Compatibility Error (NEW!)
+**Error Message:**
+```
+AttributeError: module 'pkgutil' has no attribute 'ImpImporter'
+ERROR: Failed to build 'numpy' when getting requirements to build wheel
+```
+
+**Cause:** 
+- Render defaulted to Python 3.13 which removed `pkgutil.ImpImporter`
+- Older versions of numpy/setuptools are incompatible with Python 3.13
+
+**Solution:** ✅ Fixed!
+1. Created `runtime.txt` with `python-3.11.0`
+2. Updated `requirements.txt` with pinned numpy==1.24.3
+3. Added setuptools and wheel to requirements
+4. Updated `render.yaml` to specify `runtime: python-3.11.0`
+
+**Why Python 3.11?**
+- ✅ Stable and well-tested
+- ✅ Compatible with all ML libraries (ultralytics, opencv, numpy)
+- ✅ Recommended for production ML applications
+- ❌ Python 3.13 is too new - many packages haven't updated yet
+
+---
+
 ### ❌ Problem 1: OpenCV ImportError
 **Error Message:**
 ```
@@ -255,5 +280,5 @@ GEMINI_API_KEY="AIzaSyAxR3Q0aDKpQ66opBaaCmic6VpcCwKz8Hs"
 | Render config | ✅ Fixed | Updated `render.yaml` |
 | Production settings | ✅ Fixed | Disabled reload, set workers=1 |
 | API key exposure | ⚠️ ACTION NEEDED | Regenerate key, add to Render dashboard |
-
+| Python 3.13 compatibility | ✅ Fixed | Created `runtime.txt`, updated `requirements.txt` |
 Your app should now deploy successfully! 🎉

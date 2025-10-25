@@ -5,15 +5,15 @@ services:
   - type: web
     name: sortyx-smartbin
     env: python
-    runtime: python-3.12.7   # safer until 3.13 is fully supported
+    runtime: python-3.11.0
     region: oregon
     plan: free
     branch: main
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
     startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1
     healthCheckPath: /health
     envVars:
       - key: GEMINI_API_KEY
         sync: false
       - key: PYTHON_VERSION
-        value: 3.12.7
+        value: "3.11"
