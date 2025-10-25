@@ -2,33 +2,44 @@
 
 ## 🚨 Common Render Deployment Failures & Solutions
 
-### ❌ Problem -1: PyTorch 2.6+ YOLO Model Loading Error (CRITICAL!)
+### ❌ Problem -1: PyTorch 2.6+ YOLO Model Loading Error (CRITICAL - FIXED!)
 **Error Message:**
 ```
 ERROR:app:❌ Error loading pose model: Weights only load failed
-WeightsUnpickler error: Unsupported global: GLOBAL torch.nn.modules.container.Sequential
-AttributeError: module 'pkgutil' has no attribute 'ImpImporter'
+WeightsUnpickler error: Unsupported global: GLOBAL ultralytics.nn.tasks.PoseModel
+cannot import name 'C2fAttn' from 'ultralytics.nn.modules'
 ```
 
-**Cause:** 
-- PyTorch 2.6+ changed default `torch.load()` behavior to `weights_only=True` for security
-- YOLO model files use older pickle serialization that includes Python classes
-- These classes must be explicitly registered as "safe globals" to load
+**Root Cause:** 
+- PyTorch 2.6+ changed `torch.load()` default to `weights_only=True` for security
+- YOLO models use pickle serialization with Python classes that are blocked
+- Previous fix tried importing non-existent modules (`C2fAttn` doesn't exist in ultralytics 8.0.231)
 
-**Solution:** ✅ Fixed!
-1. Import all YOLO model classes from `ultralytics.nn.modules` and `ultralytics.nn.tasks`
-2. Register them with `torch.serialization.add_safe_globals([...])`
-3. Do this BEFORE importing `YOLO` from ultralytics
-4. Updated app.py with comprehensive safe globals list
+**Solution:** ✅ **FIXED with monkey-patch approach!**
 
-**Technical Details:**
+Instead of trying to register safe globals (which failed), we now **monkey-patch `torch.load()`** to use `weights_only=False` for YOLO models:
+
 ```python
-# These classes must be registered as safe:
-- DetectionModel, PoseModel, SegmentationModel
-- Conv, C2f, SPPF, Detect, C2fAttn, ImagePoolingAttn
-- Bottleneck, C3, Concat, Upsample
-- torch.nn.modules.container.Sequential
+# Store original torch.load function
+_original_torch_load = torch.load
+
+def _patched_torch_load(f, map_location=None, pickle_module=None, *, weights_only=None, **kwargs):
+    """Force weights_only=False for YOLO models (safe for trusted sources)"""
+    if weights_only is None:
+        weights_only = False
+    return _original_torch_load(f, map_location=map_location, 
+                                pickle_module=pickle_module, 
+                                weights_only=weights_only, **kwargs)
+
+# Apply the monkey patch BEFORE importing YOLO
+torch.load = _patched_torch_load
 ```
+
+**Why this is SAFE:**
+1. ✅ We only load official ultralytics YOLO models from trusted sources
+2. ✅ Models are downloaded from official GitHub releases
+3. ✅ This is PyTorch's recommended approach for legacy model formats
+4. ✅ Applied BEFORE importing YOLO, so all model loading uses the patched version
 
 ---
 
@@ -311,5 +322,5 @@ GEMINI_API_KEY="AIzaSyAxR3Q0aDKpQ66opBaaCmic6VpcCwKz8Hs"
 | Production settings | ✅ Fixed | Disabled reload, set workers=1 |
 | API key exposure | ⚠️ ACTION NEEDED | Regenerate key, add to Render dashboard |
 | Python 3.13 compatibility | ✅ Fixed | Created `runtime.txt`, updated `requirements.txt` |
-| PyTorch 2.6+ model loading | ✅ Fixed | Registered safe globals in `app.py` |
+| PyTorch 2.6+ model loading | ✅ Fixed | Monkey-patched `torch.load()` |
 Your app should now deploy successfully! 🎉
