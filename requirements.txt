@@ -1,0 +1,23 @@
+# Core Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-dotenv==1.0.0
+jinja2==3.1.2
+
+# Pydantic (required by FastAPI)
+pydantic==2.5.0
+
+# AI/ML - CPU Optimized (NO MediaPipe, NO TensorFlow)
+ultralytics==8.0.231
+opencv-python-headless==4.8.1.78
+numpy==1.24.3
+pillow==10.1.0
+
+# Google Gemini AI (New SDK)
+google-genai==0.2.2
+
+# QR Code Generation
+qrcode[pil]==7.4.2
+
+# WebSocket Support (built into FastAPI/uvicorn, but explicit version for clarity)
+websockets==12.0

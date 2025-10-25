@@ -1,0 +1,61 @@
+# Bitbucket Pipelines CI/CD Configuration for CloudApp
+
+image: python:3.11
+
+definitions:
+  steps:
+    - step: &test
+        name: Test Application
+        caches:
+          - pip
+        script:
+          - pip install -r requirements.txt
+          - python -c "from app import app; print('✅ App imports successfully')"
+          - echo "✅ Basic smoke test passed"
+        
+    - step: &build-docker
+        name: Build Docker Image
+        services:
+          - docker
+        script:
+          - docker build -t sortyx-cloudapp:${BITBUCKET_COMMIT} .
+          - docker tag sortyx-cloudapp:${BITBUCKET_COMMIT} sortyx-cloudapp:latest
+          - echo "✅ Docker image built successfully"
+        
+    - step: &security-scan
+        name: Security Scan
+        script:
+          - pip install safety
+          - safety check --json || echo "⚠️ Security vulnerabilities found, review required"
+
+pipelines:
+  default:
+    - step: *test
+  
+  branches:
+    main:
+      - step: *test
+      - step: *security-scan
+      - step: *build-docker
+    
+    develop:
+      - step: *test
+      - step: *security-scan
+  
+  pull-requests:
+    '**':
+      - step: *test
+  
+  tags:
+    'v*':
+      - step: *test
+      - step: *build-docker
+      - step:
+          name: Deploy to Production
+          deployment: production
+          script:
+            - echo "🚀 Deploying to production..."
+            - echo "Add your deployment commands here"
+
+options:
+  max-time: 10
