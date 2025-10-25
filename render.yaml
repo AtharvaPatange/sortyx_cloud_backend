@@ -5,6 +5,7 @@ services:
   - type: web
     name: sortyx-smartbin
     env: python
+    runtime: python-3.12.7   # safer until 3.13 is fully supported
     region: oregon
     plan: free
     branch: main
@@ -15,4 +16,4 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.12.7
