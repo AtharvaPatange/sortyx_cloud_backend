@@ -959,10 +959,13 @@ if __name__ == "__main__":
     logger.info("🚀 Starting Sortyx Cloud Backend (CPU-optimized, no MediaPipe)")
     logger.info("✅ Hand detection: YOLOv8 Pose estimation")
     
+    # Use PORT from environment for Render compatibility
+    port = int(os.getenv("PORT", 8000))
+    
     uvicorn.run(
         "app:app",
         host="0.0.0.0",
-        port=8000,
-        reload=True,
+        port=port,
+        reload=False,  # Disable reload in production
         log_level="info"
     )
