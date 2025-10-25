@@ -2,6 +2,36 @@
 
 ## 🚨 Common Render Deployment Failures & Solutions
 
+### ❌ Problem -1: PyTorch 2.6+ YOLO Model Loading Error (CRITICAL!)
+**Error Message:**
+```
+ERROR:app:❌ Error loading pose model: Weights only load failed
+WeightsUnpickler error: Unsupported global: GLOBAL torch.nn.modules.container.Sequential
+AttributeError: module 'pkgutil' has no attribute 'ImpImporter'
+```
+
+**Cause:** 
+- PyTorch 2.6+ changed default `torch.load()` behavior to `weights_only=True` for security
+- YOLO model files use older pickle serialization that includes Python classes
+- These classes must be explicitly registered as "safe globals" to load
+
+**Solution:** ✅ Fixed!
+1. Import all YOLO model classes from `ultralytics.nn.modules` and `ultralytics.nn.tasks`
+2. Register them with `torch.serialization.add_safe_globals([...])`
+3. Do this BEFORE importing `YOLO` from ultralytics
+4. Updated app.py with comprehensive safe globals list
+
+**Technical Details:**
+```python
+# These classes must be registered as safe:
+- DetectionModel, PoseModel, SegmentationModel
+- Conv, C2f, SPPF, Detect, C2fAttn, ImagePoolingAttn
+- Bottleneck, C3, Concat, Upsample
+- torch.nn.modules.container.Sequential
+```
+
+---
+
 ### ❌ Problem 0: Python 3.13 Compatibility Error (NEW!)
 **Error Message:**
 ```
@@ -281,4 +311,5 @@ GEMINI_API_KEY="AIzaSyAxR3Q0aDKpQ66opBaaCmic6VpcCwKz8Hs"
 | Production settings | ✅ Fixed | Disabled reload, set workers=1 |
 | API key exposure | ⚠️ ACTION NEEDED | Regenerate key, add to Render dashboard |
 | Python 3.13 compatibility | ✅ Fixed | Created `runtime.txt`, updated `requirements.txt` |
+| PyTorch 2.6+ model loading | ✅ Fixed | Registered safe globals in `app.py` |
 Your app should now deploy successfully! 🎉

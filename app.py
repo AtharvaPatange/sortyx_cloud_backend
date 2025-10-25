@@ -33,15 +33,37 @@ from fastapi import Request
 import cv2
 import numpy as np
 import torch
+
+# ===== FIX FOR PYTORCH 2.6+ YOLO MODEL LOADING =====
+# Allow YOLO model classes to be deserialized safely
+try:
+    from ultralytics.nn.modules import (
+        Conv, C2f, SPPF, Detect, C2fAttn, ImagePoolingAttn,
+        Bottleneck, C3, Concat, Upsample
+    )
+    from ultralytics.nn.tasks import DetectionModel, PoseModel, SegmentationModel
+    
+    # Add all necessary YOLO classes to safe globals
+    torch.serialization.add_safe_globals([
+        DetectionModel, PoseModel, SegmentationModel,
+        Conv, C2f, SPPF, Detect, C2fAttn, ImagePoolingAttn,
+        Bottleneck, C3, Concat, Upsample,
+        torch.nn.modules.container.Sequential
+    ])
+    logger_init = logging.getLogger(__name__)
+    logger_init.info("✅ PyTorch safe globals configured for YOLO model loading")
+except ImportError as e:
+    logger_init = logging.getLogger(__name__)
+    logger_init.warning(f"⚠️ Could not import all YOLO modules for safe loading: {e}")
+except Exception as e:
+    logger_init = logging.getLogger(__name__)
+    logger_init.warning(f"⚠️ Error configuring PyTorch safe globals: {e}")
+
 from ultralytics import YOLO
-from ultralytics.nn import tasks
 from google import genai
 from google.genai import types
 from PIL import Image
 import qrcode
-
-# Allow YOLO PoseModel class to be deserialized safely
-torch.serialization.add_safe_globals([tasks.PoseModel])
 
 # Environment and Configuration
 from dotenv import load_dotenv
