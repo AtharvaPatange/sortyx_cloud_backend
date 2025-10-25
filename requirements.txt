@@ -26,4 +26,4 @@ google-genai==0.2.2
 qrcode[pil]==7.4.2
 
 # WebSocket Support (built into FastAPI/uvicorn, but explicit version for clarity)
-websockets==12.0
+websockets>=13.0
