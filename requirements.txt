@@ -1,6 +1,7 @@
-# Core Packaging Tools
-setuptools>=65.5.0
-wheel
+# Ensure build tools are compatible with Python 3.13
+pip>=24.2
+setuptools>=75.1.0
+wheel>=0.44.0
 
 # Core Web Framework
 fastapi==0.104.1
