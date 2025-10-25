@@ -130,13 +130,3 @@ ssl/*.pem
 # OS specific
 Thumbs.db
 .DS_Store
-
-# Large media files (videos)
-*.mp4
-*.avi
-*.mov
-*.mkv
-*.flv
-*.wmv
-static/videos/*
-!static/videos/.gitkeep

@@ -1,4 +1,4 @@
-# Sortyx Medical Waste Classification - Cloud Edition
+# Sortyx Waste Classification - Cloud Edition
 
 A complete cloud-based medical waste classification system that replaces Raspberry Pi hardware with scalable web infrastructure.
 
