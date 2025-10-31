@@ -1,8 +1,4 @@
-# Backend API Requirements
-# Ensure build tools are compatible with Python 3.13
-pip>=24.2
-setuptools>=75.1.0
-wheel>=0.44.0
+# Python 3.12.4 Compatible Dependencies
 
 # Core Web Framework
 fastapi==0.104.1
@@ -13,11 +9,11 @@ python-dotenv==1.0.0
 pydantic==2.5.0
 
 # AI/ML - CPU Optimized (NO MediaPipe, NO TensorFlow)
-numpy>=1.26.0
+numpy==1.26.4
 ultralytics==8.0.231
 opencv-python-headless==4.8.1.78
-pillow==10.1.0
-torch
+pillow==10.3.0
+torch==2.2.0
 
 # Google Gemini AI (New SDK)
 google-genai==0.2.2
@@ -25,5 +21,5 @@ google-genai==0.2.2
 # QR Code Generation
 qrcode[pil]==7.4.2
 
-# WebSocket Support
+# WebSocket Support (built into FastAPI/uvicorn, but explicit version for clarity)
 websockets>=13.0
