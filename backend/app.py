@@ -284,7 +284,7 @@ class HandWristDetector:
                         hand_bbox = None
                         hand_confidence = 0.0
                         
-                        WRIST_CONFIDENCE_THRESHOLD = 0.30
+                        WRIST_CONFIDENCE_THRESHOLD = 0.05  # Lowered from 0.30 for better detection
                         
                         if left_wrist[2] > WRIST_CONFIDENCE_THRESHOLD or right_wrist[2] > WRIST_CONFIDENCE_THRESHOLD:
                             if left_wrist[2] > right_wrist[2]:
