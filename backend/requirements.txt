@@ -1,4 +1,5 @@
 # Python 3.12.4 Compatible Dependencies
+# Use pre-built wheels to avoid compilation issues
 
 # Core Web Framework
 fastapi==0.104.1
@@ -9,10 +10,11 @@ python-dotenv==1.0.0
 pydantic==2.5.0
 
 # AI/ML - CPU Optimized (NO MediaPipe, NO TensorFlow)
+# Using versions with pre-built wheels for Python 3.12
 numpy==1.26.4
 ultralytics==8.0.231
-opencv-python-headless==4.8.1.78
-pillow==10.3.0
+opencv-python-headless==4.10.0.84
+pillow>=10.0.0
 torch==2.2.0
 
 # Google Gemini AI (New SDK)
@@ -21,5 +23,5 @@ google-genai==0.2.2
 # QR Code Generation
 qrcode[pil]==7.4.2
 
-# WebSocket Support (built into FastAPI/uvicorn, but explicit version for clarity)
+# WebSocket Support
 websockets>=13.0

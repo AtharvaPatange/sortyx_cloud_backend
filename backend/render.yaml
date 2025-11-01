@@ -3,7 +3,7 @@ services:
     name: sortyx-backend
     runtime: python
     plan: free
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
     startCommand: python app.py
     envVars:
       - key: PYTHON_VERSION
@@ -14,3 +14,5 @@ services:
         value: 8000
       - key: ENVIRONMENT
         value: production
+    # Force Python 3.12.4
+    autoDeploy: true
