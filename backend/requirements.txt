@@ -1,30 +1,29 @@
-# Ensure build tools are compatible with Python 3.13
+# Ensure build tools are compatible with Python 3.12.7
 pip>=24.2
 setuptools>=75.1.0
 wheel>=0.44.0
 
 # Core Web Framework
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-python-dotenv==1.0.0
-jinja2==3.1.2
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-dotenv==1.0.1
+jinja2==3.1.4
 
-# Pydantic (required by FastAPI)
-pydantic==2.5.0
+# Pydantic (use version with pre-built wheels for Python 3.12)
+pydantic==2.10.6
 
-# AI/ML - CPU Optimized (NO MediaPipe, NO TensorFlow)
-# Pin numpy to version compatible with Python 3.11 and ultralytics
-numpy>=1.26.0
-ultralytics==8.0.231
-opencv-python-headless==4.8.1.78
-pillow==10.1.0
-torch
+# AI/ML - Python 3.12.7 Compatible Versions
+numpy==1.26.4
+ultralytics==8.3.64
+opencv-python-headless==4.10.0.84
+pillow==11.0.0
+torch==2.5.1
 
-# Google Gemini AI (New SDK)
-google-genai==0.2.2
+# Google Gemini AI (Updated SDK)
+google-genai==1.47.0
 
 # QR Code Generation
-qrcode[pil]==7.4.2
+qrcode[pil]==8.2
 
-# WebSocket Support (built into FastAPI/uvicorn, but explicit version for clarity)
-websockets>=13.0
+# WebSocket Support
+websockets==14.1
