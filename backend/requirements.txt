@@ -1,26 +1,26 @@
 # Python 3.12.4 Compatible Dependencies
-# Use pre-built wheels to avoid compilation issues
+# All packages with pre-built wheels for Python 3.12
 
 # Core Web Framework
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-python-dotenv==1.0.0
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-dotenv==1.0.1
 
-# Pydantic (required by FastAPI)
-pydantic==2.5.0
+# Pydantic (required by FastAPI) - using version with pre-built wheels
+pydantic==2.10.6
 
+# AI/ML - CPU Optimized with pre-built wheels
+numpy==1.26.4
+ultralytics==8.3.64
+opencv-python-headless==4.10.0.84
+pillow==11.0.0
+torch==2.5.1
 
-numpy
-ultralytics
-opencv-python-headless
-pillow
-torch
-
-# Google Gemini AI (New SDK)
-google-genai
+# Google Gemini AI
+google-genai==1.47.0
 
 # QR Code Generation
-qrcode[pil]
+qrcode[pil]==8.2
 
 # WebSocket Support
-websockets
+websockets==14.1
