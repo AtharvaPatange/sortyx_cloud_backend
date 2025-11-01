@@ -9,19 +9,18 @@ python-dotenv==1.0.0
 # Pydantic (required by FastAPI)
 pydantic==2.5.0
 
-# AI/ML - CPU Optimized (NO MediaPipe, NO TensorFlow)
-# Using versions with pre-built wheels for Python 3.12
-numpy==1.26.4
-ultralytics==8.0.231
-opencv-python-headless==4.10.0.84
-pillow>=10.0.0
-torch==2.2.0
+
+numpy
+ultralytics
+opencv-python-headless
+pillow
+torch
 
 # Google Gemini AI (New SDK)
-google-genai==0.2.2
+google-genai
 
 # QR Code Generation
-qrcode[pil]==7.4.2
+qrcode[pil]
 
 # WebSocket Support
-websockets>=13.0
+websockets
