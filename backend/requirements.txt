@@ -11,10 +11,10 @@ pydantic==2.10.6
 
 # AI/ML - CPU Optimized with pre-built wheels
 numpy==1.26.4
-ultralytics==8.3.64
+ultralytics
 opencv-python-headless==4.10.0.84
 pillow==11.0.0
-torch==2.5.1
+torch
 
 # Google Gemini AI
 google-genai==1.47.0
