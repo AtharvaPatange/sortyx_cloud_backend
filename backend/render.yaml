@@ -4,7 +4,7 @@ services:
     runtime: python
     plan: free
     # CRITICAL: Specify Python version here
-    runtimeVersion: "3.12.4"
+    runtimeVersion: "3.12.7"
     buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
     startCommand: python app.py
     envVars:

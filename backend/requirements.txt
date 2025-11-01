@@ -1,26 +1,30 @@
-# Python 3.12.4 Compatible Dependencies
-# All packages with pre-built wheels for Python 3.12
+# Ensure build tools are compatible with Python 3.13
+pip>=24.2
+setuptools>=75.1.0
+wheel>=0.44.0
 
 # Core Web Framework
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-python-dotenv==1.0.1
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-dotenv==1.0.0
+jinja2==3.1.2
 
-# Pydantic (required by FastAPI) - using version with pre-built wheels
-pydantic==2.10.6
+# Pydantic (required by FastAPI)
+pydantic==2.5.0
 
-# AI/ML - CPU Optimized with pre-built wheels
-numpy==1.26.4
-ultralytics
-opencv-python-headless==4.10.0.84
-pillow==11.0.0
+# AI/ML - CPU Optimized (NO MediaPipe, NO TensorFlow)
+# Pin numpy to version compatible with Python 3.11 and ultralytics
+numpy>=1.26.0
+ultralytics==8.0.231
+opencv-python-headless==4.8.1.78
+pillow==10.1.0
 torch
 
-# Google Gemini AI
-google-genai==1.47.0
+# Google Gemini AI (New SDK)
+google-genai==0.2.2
 
 # QR Code Generation
-qrcode[pil]==8.2
+qrcode[pil]==7.4.2
 
-# WebSocket Support
-websockets==14.1
+# WebSocket Support (built into FastAPI/uvicorn, but explicit version for clarity)
+websockets>=13.0
