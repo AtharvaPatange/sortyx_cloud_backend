@@ -80,11 +80,27 @@ app = FastAPI(
     redoc_url="/api/redoc"
 )
 
-# Add CORS middleware - ALLOW ALL ORIGINS for frontend
+# Add CORS middleware - configurable via environment for Render/local usage
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "*")
+if allowed_origins_env.strip() == "*":
+    allowed_origins = ["*"]
+    cors_allow_credentials = False  # Starlette forbids '*' with credentials enabled
+else:
+    allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
+    cors_allow_credentials = os.getenv("ALLOW_CREDENTIALS", "false").lower() == "true"
+
+logger.info(
+    "🌐 Configuring CORS",
+    extra={
+        "allowed_origins": allowed_origins,
+        "allow_credentials": cors_allow_credentials,
+    },
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, restrict to your frontend domain
-    allow_credentials=True,
+    allow_origins=allowed_origins,
+    allow_credentials=cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
