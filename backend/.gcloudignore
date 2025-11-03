@@ -1,0 +1,60 @@
+# Exclude files from Cloud Build context
+# Similar to .dockerignore but for gcloud builds
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+
+# Test files
+tests/
+test_*.py
+*_test.py
+
+# Cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Frontend (if in same repo)
+frontend/
+static/videos/
+
+# Render-specific
+.render-buildpacks.json
+render.yaml

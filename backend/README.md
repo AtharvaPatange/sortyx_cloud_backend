@@ -172,84 +172,137 @@ app.add_middleware(
 
 ## 🌐 Deployment
 
-### Docker Deployment
+Choose your deployment platform:
 
-Create a `Dockerfile`:
+### 🚀 Recommended: Google Cloud Run (Best Performance)
 
-```dockerfile
-FROM python:3.11-slim
+**One-command deployment:**
 
-WORKDIR /app
+```bash
+# Windows PowerShell
+.\deploy-gcloud.ps1
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements and install
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application
-COPY . .
-
-# Create models directory
-RUN mkdir -p models
-
-# Expose port
-EXPOSE 8000
-
-# Run application
-CMD ["python", "app.py"]
+# Linux/macOS
+chmod +x deploy-gcloud.sh
+./deploy-gcloud.sh
 ```
 
-Build and run:
+**Manual deployment:**
+
 ```bash
-docker build -t sortyx-backend .
-docker run -p 8000:8000 -e GEMINI_API_KEY=your_key sortyx-backend
-```
+# Install Google Cloud SDK: https://cloud.google.com/sdk/docs/install
 
-### Cloud Deployment
+# Login and set project
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
 
-#### Heroku
-```bash
-# Login to Heroku
-heroku login
+# Enable APIs
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com
 
-# Create app
-heroku create sortyx-backend
+# Create secret for Gemini API key
+echo -n "YOUR_GEMINI_API_KEY" | gcloud secrets create GEMINI_API_KEY --data-file=-
 
-# Set environment variables
-heroku config:set GEMINI_API_KEY=your_key
-
-# Deploy
-git push heroku main
-```
-
-#### AWS (ECS/Fargate)
-1. Build Docker image
-2. Push to Amazon ECR
-3. Create ECS task definition
-4. Deploy to Fargate cluster
-
-#### Google Cloud Run
-```bash
-# Build and push
-gcloud builds submit --tag gcr.io/your-project/sortyx-backend
-
-# Deploy
+# Deploy!
 gcloud run deploy sortyx-backend \
-  --image gcr.io/your-project/sortyx-backend \
-  --platform managed \
+  --source . \
   --region us-central1 \
   --allow-unauthenticated \
-  --set-env-vars GEMINI_API_KEY=your_key
+  --memory 2Gi \
+  --cpu 2 \
+  --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest
+```
+
+**📖 Full Guide:** See [GOOGLE_CLOUD_DEPLOY.md](./GOOGLE_CLOUD_DEPLOY.md) for complete instructions.
+
+**⚡ Quick Reference:** See [GCLOUD_QUICKREF.md](./GCLOUD_QUICKREF.md) for common commands.
+
+**🆚 Comparison:** See [RENDER_VS_CLOUDRUN.md](./RENDER_VS_CLOUDRUN.md) for platform comparison.
+
+---
+
+### 📦 Alternative: Render.com (Easiest Setup)
+
+**Quick deployment:**
+
+1. Connect your GitHub repository to Render
+2. Create a new Web Service
+3. Point to `backend` directory
+4. Add environment variable: `GEMINI_API_KEY`
+5. Deploy!
+
+**Using render.yaml:**
+
+```yaml
+services:
+  - type: web
+    name: sortyx-backend
+    runtime: python
+    runtimeVersion: "3.12.7"
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: PORT
+        value: 8000
+      - key: RENDER_FREE_TIER
+        value: "true"
+```
+
+**⚠️ Note:** Render free tier has limitations:
+- 512 MB RAM (tight for YOLO models)
+- Sleeps after 15 minutes of inactivity
+- 30-60 second cold starts
+
+---
+
+### 🐳 Docker Deployment (Self-Hosted)
+
+**Build and run locally:**
+
+```bash
+# Build image
+docker build -t sortyx-backend .
+
+# Run container
+docker run -p 8080:8080 \
+  -e GEMINI_API_KEY=your_key_here \
+  sortyx-backend
+```
+
+**Using Docker Compose:**
+
+```yaml
+version: '3.8'
+services:
+  backend:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PORT=8080
+    restart: unless-stopped
+```
+
+---
+
+### ☁️ Other Cloud Platforms
+
+#### AWS (ECS/Fargate)
+```bash
+# Build and push to ECR
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin YOUR_ECR_URL
+docker build -t sortyx-backend .
+docker tag sortyx-backend:latest YOUR_ECR_URL/sortyx-backend:latest
+docker push YOUR_ECR_URL/sortyx-backend:latest
+
+# Deploy to ECS (use AWS Console or CLI)
 ```
 
 #### Azure Container Instances
 ```bash
-# Build image
+# Build and push to ACR
 az acr build --registry yourregistry --image sortyx-backend .
 
 # Deploy
@@ -258,27 +311,31 @@ az container create \
   --name sortyx-backend \
   --image yourregistry.azurecr.io/sortyx-backend \
   --cpu 2 --memory 4 \
-  --ports 8000 \
+  --ports 8080 \
   --environment-variables GEMINI_API_KEY=your_key
 ```
 
-### Render.com Deployment
-
-Create `render.yaml`:
-
-```yaml
-services:
-  - type: web
-    name: sortyx-backend
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python app.py
-    envVars:
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: PORT
-        value: 8000
+#### Heroku
+```bash
+heroku login
+heroku create sortyx-backend
+heroku config:set GEMINI_API_KEY=your_key
+git push heroku main
 ```
+
+---
+
+### 📊 Deployment Comparison
+
+| Platform | Setup Difficulty | Performance | Cost (Low Traffic) | Recommended For |
+|----------|-----------------|-------------|-------------------|-----------------|
+| **Google Cloud Run** | Medium | ⭐⭐⭐⭐⭐ | $2-5/month | **Production** |
+| **Render** | Easy | ⭐⭐⭐ | Free / $7/month | **Prototypes** |
+| **Docker (Self-hosted)** | Medium | ⭐⭐⭐⭐ | Server cost | **Custom Setup** |
+| **AWS ECS** | Hard | ⭐⭐⭐⭐⭐ | $10+/month | **Enterprise** |
+| **Heroku** | Easy | ⭐⭐⭐ | $7+/month | **Hobby Projects** |
+
+**💡 Recommendation:** Start with **Google Cloud Run** for the best balance of performance, cost, and ease of deployment.
 
 ## 🔍 Troubleshooting
 
