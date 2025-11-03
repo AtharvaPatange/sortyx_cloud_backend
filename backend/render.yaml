@@ -14,4 +14,6 @@ services:
         value: 8000
       - key: ENVIRONMENT
         value: production
+      - key: RENDER_FREE_TIER
+        value: "true"
     autoDeploy: true

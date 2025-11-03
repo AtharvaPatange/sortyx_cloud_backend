@@ -502,17 +502,28 @@ class RecyclableWasteClassifier:
             }
     
     def classify_with_gemini(self, image: np.ndarray) -> Dict[str, Any]:
-        """Classify using Gemini AI with new google-genai SDK"""
+        """Classify using Gemini AI with new google-genai SDK - Optimized for Render Free Tier"""
         if not hasattr(self, 'genai_client') or self.genai_client is None:
             logger.error("❌ Gemini client not initialized")
             return self.get_fallback_classification()
         
         try:
+            # Resize image to reduce upload time (critical for free tier)
+            h, w = image.shape[:2]
+            max_size = 640  # Reduce from original size
+            if max(h, w) > max_size:
+                scale = max_size / max(h, w)
+                new_w, new_h = int(w * scale), int(h * scale)
+                image = cv2.resize(image, (new_w, new_h))
+                logger.info(f"📐 Resized image to {new_w}x{new_h} for faster processing")
+            
             pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
             
+            # Use lower quality JPEG to speed up upload
             img_byte_arr = io.BytesIO()
-            pil_image.save(img_byte_arr, format='JPEG')
+            pil_image.save(img_byte_arr, format='JPEG', quality=70, optimize=True)
             img_byte_arr.seek(0)
+            logger.info(f"📦 Image compressed to {img_byte_arr.tell() / 1024:.1f} KB")
             
             prompt = """Classify this item as RECYCLABLE or NON-RECYCLABLE.
 
@@ -523,12 +534,15 @@ Format: "Category: Item Name. Explanation"
 Example: "Recyclable: Plastic Bottle. Clean plastic can be recycled."
 """
             
-            model_names = ['gemini-2.0-flash-exp', 'gemini-2.5-flash', 'gemini-2.5-pro']
+            # Use only fastest model for free tier
+            model_names = ['gemini-2.0-flash-exp']  # Fastest model only
             
             for model_name in model_names:
                 try:
+                    start_time = time.time()
                     logger.info(f"🧠 Attempting Gemini classification with model: {model_name}")
                     
+                    # Upload with timeout awareness
                     uploaded_file = self.genai_client.files.upload(
                         file=img_byte_arr,
                         config=types.UploadFileConfig(
@@ -536,7 +550,11 @@ Example: "Recyclable: Plastic Bottle. Clean plastic can be recycled."
                             display_name='waste_item.jpg'
                         )
                     )
+                    upload_time = time.time() - start_time
+                    logger.info(f"⏱️ Upload completed in {upload_time:.2f}s")
                     
+                    # Generate content with aggressive timeout
+                    gen_start = time.time()
                     response = self.genai_client.models.generate_content(
                         model=model_name,
                         contents=[
@@ -544,12 +562,18 @@ Example: "Recyclable: Plastic Bottle. Clean plastic can be recycled."
                             uploaded_file
                         ],
                         config=types.GenerateContentConfig(
-                            temperature=0.4,
-                            top_p=0.95,
-                            top_k=40,
-                            max_output_tokens=1024
+                            temperature=0.2,  # Lower for faster response
+                            top_p=0.8,  # Lower for faster response
+                            top_k=20,  # Lower for faster response
+                            max_output_tokens=256  # Much lower for speed
                         )
                     )
+                    gen_time = time.time() - gen_start
+                    logger.info(f"⏱️ Generation completed in {gen_time:.2f}s")
+                    
+                    total_time = time.time() - start_time
+                    if total_time > 15:  # Warn if slow
+                        logger.warning(f"⚠️ Gemini call took {total_time:.2f}s - may timeout on free tier!")
                     
                     try:
                         self.genai_client.files.delete(name=uploaded_file.name)
@@ -789,7 +813,7 @@ async def detect_hand(request: ClassificationRequest):
 
 @app.post("/api/classify", response_model=ClassificationResponse)
 async def classify_waste(request: ClassificationRequest, background_tasks: BackgroundTasks):
-    """Classify waste item"""
+    """Classify waste item - Optimized for Render Free Tier"""
     start_time = time.time()
     
     try:
@@ -804,7 +828,15 @@ async def classify_waste(request: ClassificationRequest, background_tasks: Backg
         
         method = (request.classification_method or "model").lower()
         
-        if method == "model":
+        # Check environment variable for free tier mode
+        is_free_tier = os.getenv("RENDER_FREE_TIER", "false").lower() == "true"
+        
+        if is_free_tier:
+            logger.info(f"🆓 Free tier mode - forcing fast YOLO classification (no Gemini)")
+            # Always use YOLO on free tier - much faster, avoids timeouts
+            result = classifier.classify_with_yolo_model(image)
+            classifier.stats['model_classifications'] += 1
+        elif method == "model":
             result = classifier.classify_with_yolo_model(image)
             classifier.stats['model_classifications'] += 1
         else:
