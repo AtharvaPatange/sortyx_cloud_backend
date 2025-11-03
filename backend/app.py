@@ -20,6 +20,7 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 import logging
 from pathlib import Path
+import threading
 
 # Web Framework
 from fastapi import FastAPI, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect, BackgroundTasks
@@ -683,29 +684,75 @@ Example: "Recyclable: Plastic Bottle. Clean plastic can be recycled."
             logger.error(f"QR code error: {e}")
             return None
 
-# Initialize classifier
-classifier = RecyclableWasteClassifier()
+# Initialize classifier lazily to avoid blocking startup on Render cold starts
+classifier = None  # type: ignore
+
+# Readiness flags
+MODELS_READY = False
+INITIALIZING = False
+INIT_ERROR: Optional[str] = None
+
+
+def _init_models_sync():
+    """Initialize heavy models in a background thread so the app can start quickly."""
+    global classifier, MODELS_READY, INITIALIZING, INIT_ERROR
+    try:
+        start = time.time()
+        logger.info("🧰 Initializing models in background thread…")
+        classifier = RecyclableWasteClassifier()
+        MODELS_READY = True
+        INIT_ERROR = None
+        logger.info(f"✅ Models ready in {time.time() - start:.2f}s")
+    except Exception as e:
+        INIT_ERROR = str(e)
+        logger.error("❌ Model initialization failed", exc_info=True)
+    finally:
+        INITIALIZING = False
+
+
+@app.on_event("startup")
+def _schedule_model_init():
+    """Kick off background initialization at process start."""
+    global INITIALIZING
+    if not INITIALIZING and not MODELS_READY:
+        INITIALIZING = True
+        threading.Thread(target=_init_models_sync, daemon=True).start()
 
 # ==================== API ROUTES ====================
 
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
+    status = (
+        "ready" if MODELS_READY else
+        ("initializing" if INITIALIZING else ("error" if INIT_ERROR else "not_started"))
+    )
     return {
-        "status": "healthy",
+        "status": status,
         "timestamp": datetime.now().isoformat(),
         "models_loaded": {
             "yolo_detection": yolo_detection_model is not None,
-            "yolo_pose": classifier.hand_detector.pose_model is not None,
+            "yolo_pose": bool(getattr(classifier, 'hand_detector', None) and getattr(classifier.hand_detector, 'pose_model', None)),
             "yolo_classification": yolo_classification_model is not None,
             "gemini_configured": bool(os.getenv('GEMINI_API_KEY'))
         },
+        "initializing": INITIALIZING,
+        "ready": MODELS_READY,
+        "error": INIT_ERROR,
         "hand_detection": "YOLOv8 Pose (CPU-optimized)"
     }
 
 @app.post("/api/detect-hand-wrist")
 async def detect_hand_wrist(request: ClassificationRequest):
     """Detect hand and wrist using YOLOv8 Pose estimation"""
+    if not MODELS_READY:
+        return {
+            "hand_detected": False,
+            "wrist_detected": False,
+            "object_in_hand": False,
+            "message": "Service warming up. Please retry in a few seconds.",
+            "status": "initializing" if INITIALIZING else ("error" if INIT_ERROR else "not_started")
+        }
     try:
         # Decode image
         image_data = base64.b64decode(
@@ -832,6 +879,26 @@ async def classify_waste(request: ClassificationRequest, background_tasks: Backg
     """Classify waste item - Optimized for Render Free Tier"""
     start_time = time.time()
     
+    if not MODELS_READY:
+        # Return a fast fallback while warming to avoid pending requests
+        fallback = {
+            "classification": "Non-Recyclable",
+            "confidence": 0.50,
+            "item_name": "Unknown Item",
+            "bin_color": "Black",
+            "explanation": "Service warming up. Returning safe fallback classification.",
+        }
+        return ClassificationResponse(
+            classification=fallback["classification"],
+            confidence=fallback["confidence"],
+            item_name=fallback["item_name"],
+            bin_color=fallback["bin_color"],
+            qr_code=None,
+            explanation=fallback["explanation"],
+            timestamp=datetime.now().isoformat(),
+            processing_time=time.time() - start_time
+        )
+
     try:
         image_data = base64.b64decode(
             request.image_base64.split(',')[1] if ',' in request.image_base64 else request.image_base64
