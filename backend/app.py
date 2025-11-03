@@ -178,15 +178,15 @@ class HandWristDetector:
                     logger.info(f"   ✅ Model test successful")
                     return
             
-            # Download if not found
-            logger.info("📥 Downloading YOLOv8 Pose model...")
-            self.pose_model = YOLO('yolov8n-pose.pt')
+            # Download if not found - Ultralytics will auto-download to cache
+            logger.info("📥 Downloading YOLOv8 Pose model from Ultralytics...")
+            self.pose_model = YOLO('yolov8n-pose.pt')  # This triggers auto-download
             
-            # Save to models directory
+            # Create models directory for future use
             model_dir = Path("models")
             model_dir.mkdir(exist_ok=True)
             
-            logger.info("✅ YOLOv8 Pose model downloaded and loaded")
+            logger.info("✅ YOLOv8 Pose model downloaded and loaded from Ultralytics cache")
             
         except Exception as e:
             logger.error(f"❌ Error loading pose model: {e}", exc_info=True)
