@@ -3,7 +3,7 @@ const BACKEND_CONFIG = {
     // Update this with your backend API URL
     // Development: http://localhost:8000
     // Production: https://your-backend-api.com
-    API_URL: 'http://localhost:8000',
+    API_URL: 'https://sortyx-cloud-backend.onrender.com',
     
     // WebSocket URL (auto-detected from API_URL)
     WS_URL: '',  // Will be set automatically
@@ -50,3 +50,5 @@ console.log('🔧 Frontend Configuration:');
 console.log('   API URL:', BACKEND_CONFIG.API_URL);
 console.log('   WebSocket URL:', BACKEND_CONFIG.WS_URL);
 console.log('   Scan Interval:', BACKEND_CONFIG.SETTINGS.SCAN_INTERVAL, 'ms');
+console.log('   Config loaded at:', new Date().toISOString());
+console.log('   🔄 Cache Buster: v' + Date.now());
