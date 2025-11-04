@@ -3,7 +3,7 @@ const BACKEND_CONFIG = {
     // Update this with your backend API URL
     // Development: http://localhost:8000
     // Production: https://your-backend-api.com
-    API_URL: 'https://sortyx-cloud-backend.onrender.com',
+    API_URL: 'https://sortyx-backend-ztqoyvlh2a-uc.a.run.app',
     
     // WebSocket URL (auto-detected from API_URL)
     WS_URL: '',  // Will be set automatically
