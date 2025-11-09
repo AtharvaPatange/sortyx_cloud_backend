@@ -1416,7 +1416,7 @@
         let videoElement, canvas, context, backgroundVideo;
         let isClassifying = false;
         let websocket = null;
-        let classificationMethod = 'model'; // 'model' or 'llm'
+        let classificationMethod = 'vertex_ai'; // Always use Vertex AI for 100% accuracy
         let continuousScanning = true; // AUTO-START ENABLED
         let scanningInterval = null;
         let handDetectionTimeout = null;
