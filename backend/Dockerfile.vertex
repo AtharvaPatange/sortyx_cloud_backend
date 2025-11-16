@@ -1,4 +1,5 @@
-# Multi-stage build for smaller image size
+# Multi-stage build optimized for Vertex AI on Cloud Run
+# GPU-ready and performance-optimized
 FROM python:3.12-slim AS builder
 
 # Install system dependencies for building Python packages
@@ -16,15 +17,15 @@ RUN apt-get update && apt-get install -y \
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy requirements and install
-COPY requirements.txt .
+# Copy Vertex AI requirements
+COPY requirements-vertex.txt requirements.txt
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Stage 2: Runtime
+# Stage 2: Runtime (GPU-ready)
 FROM python:3.12-slim
 
-# Install runtime dependencies only
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libsm6 \
@@ -43,10 +44,13 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Set working directory
 WORKDIR /app
 
-# Copy application files
-COPY app.py .
+# Copy vertex.py as app.py (Cloud Run expects app.py)
+COPY vertex.py app.py
 
-# Create non-root user FIRST
+# Copy requirements-vertex.txt for reference
+COPY requirements-vertex.txt .
+
+# Create non-root user
 RUN useradd -m -u 1000 appuser
 
 # Create directories with proper permissions
@@ -56,10 +60,13 @@ RUN mkdir -p /app/models /home/appuser/.cache/ultralytics /home/appuser/.cache/t
 # Switch to non-root user
 USER appuser
 
-# Set environment variables for model cache
+# Set environment variables for model cache and performance
 ENV YOLO_CONFIG_DIR=/home/appuser/.cache/ultralytics
 ENV TORCH_HOME=/home/appuser/.cache/torch
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONOPTIMIZE=2
+ENV OMP_NUM_THREADS=4
+ENV PORT=8080
 
 # Expose port
 EXPOSE 8080
@@ -68,5 +75,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8080/api/health || exit 1
 
-# Start application
-CMD ["python", "app.py"]
+# Start application (vertex.py running as app.py, so module is "app:app")
+CMD ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]

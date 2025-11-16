@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sortyx Smart TV Recycle Detector</title>
+    <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: #333;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+            padding: 12px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            border-bottom: 3px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo i {
+            font-size: 40px;
+            color: white;
+            animation: rotate-slow 10s linear infinite;
+        }
+
+        @keyframes rotate-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .logo h1 {
+            color: white;
+            font-weight: 900;
+            font-size: 28px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
+        }
+
+        .datetime {
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .main-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            gap: 25px;
+            padding: 25px;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .main-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            gap: 25px;
+            padding: 25px;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .camera-section {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            height: 450px;
+            background: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            margin: 0 auto;
+            border: 3px solid rgba(17, 153, 142, 0.3);
+        }
+
+        #videoElement {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #canvasElement {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            padding: 15px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .panel-title i {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 24px;
+        }
+
+        .bin-levels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .bin-item {
+            text-align: center;
+            padding: 12px 10px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border: 3px solid transparent;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .bin-item.highlighted {
+            transform: scale(1.1);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+            animation: pulse-bin 1.5s ease-in-out infinite;
+            z-index: 10;
+        }
+
+        .bin-item.highlighted.recyclable {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 50%, #1abc9c 100%);
+            border-color: #27ae60;
+            color: white;
+            box-shadow: 0 15px 50px rgba(39, 174, 96, 0.6), 0 0 30px rgba(39, 174, 96, 0.4);
+        }
+
+        .bin-item.highlighted.non-recyclable {
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 50%, #1a252f 100%);
+            border-color: #2c3e50;
+            color: white;
+            box-shadow: 0 15px 50px rgba(44, 62, 80, 0.6), 0 0 30px rgba(44, 62, 80, 0.4);
+        }
+
+        @keyframes pulse-bin {
+            0%, 100% {
+                box-shadow: 0 15px 50px rgba(39, 174, 96, 0.6), 0 0 30px rgba(39, 174, 96, 0.4);
+            }
+            50% {
+                box-shadow: 0 20px 70px rgba(39, 174, 96, 0.9), 0 0 50px rgba(39, 174, 96, 0.7);
+            }
+        }
+
+        .bin-item.highlighted.non-recyclable {
+            animation: pulse-bin-dark 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-bin-dark {
+            0%, 100% {
+                box-shadow: 0 15px 50px rgba(44, 62, 80, 0.6), 0 0 30px rgba(44, 62, 80, 0.4);
+            }
+            50% {
+                box-shadow: 0 20px 70px rgba(44, 62, 80, 0.9), 0 0 50px rgba(44, 62, 80, 0.7);
+            }
+        }
+
+        .bin-confidence {
+            margin-top: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #666;
+        }
+
+        .bin-item.highlighted .bin-confidence {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 17px;
+        }
+
+        .bin-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: inline-block;
+            animation: bounce-icon 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce-icon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .bin-name {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .bin-level {
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            padding: 12px 10px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(17, 153, 142, 0.3);
+            transition: transform 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(17, 153, 142, 0.5);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 900;
+            color: white;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-panel {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .status-text {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status-detail {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            margin: 15px 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f44336 0%, #ff9800 50%, #4CAF50 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        .indicator.scanning {
+            background: #4CAF50;
+        }
+
+        .indicator.detecting {
+            background: #FF9800;
+        }
+
+        .indicator.analyzing {
+            background: #2196F3;
+        }
+
+        .indicator.classifying {
+            background: #9C27B0;
+        }
+
+        .indicator.result {
+            background: #00BCD4;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        .result-display {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            font-size: 1.5em;
+        }
+
+        .recyclable {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .non-recyclable {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #croppedPreview {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 200px;
+            border: 3px solid white;
+            border-radius: 10px;
+            display: none;
+            background: #000;
+        }
+
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            max-width: 300px;
+            display: none;
+        }
+
+        .debug-info.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-recycle"></i>
+                <h1>Sortyx Smart TV Detector</h1>
+            </div>
+            <div class="datetime" id="datetime"></div>
+        </header>
+
+        <main class="main-content">
+            <div class="camera-section">
+                <div class="video-container">
+                    <video id="videoElement" autoplay playsinline></video>
+                    <canvas id="canvasElement"></canvas>
+                </div>
+
+                <div class="status-panel">
+                    <div class="status-text" id="statusText">
+                        <span class="indicator scanning"></span>
+                        Initializing Camera...
+                    </div>
+                    <div class="status-detail" id="statusDetail">
+                        Please show your hand holding an object to the camera
+                    </div>
+                    <div class="confidence-bar" style="display:none;" id="confidenceBar">
+                        <div class="confidence-fill" id="confidenceFill" style="width:0%;">
+                            <span id="confidenceText">0%</span>
+                        </div>
+                    </div>
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                    </div>
+                    <div class="result-display" id="resultDisplay" style="display:none;"></div>
+                </div>
+
+                <canvas id="croppedPreview" style="display:none;"></canvas>
+                <div class="debug-info" id="debugInfo"></div>
+            </div>
+
+            <aside class="sidebar">
+                <div class="panel">
+                    <div class="panel-title">
+                        <i class="fas fa-trash"></i>
+                        Disposal Bins
+                    </div>
+                    <div class="bin-levels">
+                        <div class="bin-item recyclable-bin" id="recyclable-bin">
+                            <div class="bin-icon">♻️</div>
+                            <div class="bin-name">Recyclable</div>
+                           
+                            <div class="bin-confidence"></div>
+                        </div>
+                        <div class="bin-item non-recyclable-bin" id="non-recyclable-bin">
+                            <div class="bin-icon">🗑️</div>
+                            <div class="bin-name">Non-Recyclable</div>
+                            
+                            <div class="bin-confidence"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Spacing between panels -->
+                <div style="height: 20px;"></div>
+                
+                <div class="panel">
+                    <div class="panel-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Statistics
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number" id="stat-total">0</div>
+                            <div class="stat-label">Total Items</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="stat-recyclable">0</div>
+                            <div class="stat-label">Recyclable</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="stat-non-recyclable">0</div>
+                            <div class="stat-label">Non-Recyclable</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="stat-accuracy">0%</div>
+                            <div class="stat-label">Avg Confidence</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            VIDEO_WIDTH: 1280,
+            VIDEO_HEIGHT: 720,
+            HAND_CONFIDENCE: 0.7,
+            DETECTION_COOLDOWN: 3000,
+            OBJECT_CONFIDENCE_THRESHOLD: 75, // % confidence needed to trigger
+            STABILITY_FRAMES: 5, // Frames to confirm object presence
+            API_ENDPOINT: (typeof BACKEND_CONFIG !== 'undefined' && BACKEND_CONFIG.API_URL) 
+                ? `${BACKEND_CONFIG.API_URL}/api/classify` 
+                : 'http://localhost:8000/api/classify', // Fallback for local development
+            DEBUG_MODE: false // Set to true to see detection scores
+        };
+
+        // State management
+        let state = {
+            status: 'initializing',
+            isProcessing: false,
+            lastDetectionTime: 0,
+            hands: null,
+            camera: null,
+            detectionHistory: [],
+            previousFrame: null,
+            stableFrameCount: 0,
+            lastHandPosition: null
+        };
+
+        // DOM elements
+        const videoElement = document.getElementById('videoElement');
+        const canvasElement = document.getElementById('canvasElement');
+        const canvasCtx = canvasElement.getContext('2d');
+        const statusText = document.getElementById('statusText');
+        const statusDetail = document.getElementById('statusDetail');
+        const loadingElement = document.getElementById('loading');
+        const resultDisplay = document.getElementById('resultDisplay');
+        const croppedPreview = document.getElementById('croppedPreview');
+        const confidenceBar = document.getElementById('confidenceBar');
+        const confidenceFill = document.getElementById('confidenceFill');
+        const confidenceText = document.getElementById('confidenceText');
+        const debugInfo = document.getElementById('debugInfo');
+
+        if (CONFIG.DEBUG_MODE) {
+            debugInfo.classList.add('show');
+        }
+
+        // Update UI status
+        function updateStatus(status, detail = '') {
+            const statusIcons = {
+                scanning: { icon: '👁️', indicator: 'scanning', text: 'Scanning for hands...' },
+                handDetected: { icon: '✋', indicator: 'detecting', text: 'Hand detected!' },
+                analyzing: { icon: '🔍', indicator: 'analyzing', text: 'Analyzing for object...' },
+                objectDetected: { icon: '📦', indicator: 'detecting', text: 'Object detected!' },
+                confirming: { icon: '⏳', indicator: 'analyzing', text: 'Confirming object...' },
+                classifying: { icon: '🤖', indicator: 'classifying', text: 'Classifying object...' },
+                result: { icon: '✅', indicator: 'result', text: 'Classification complete!' },
+                error: { icon: '⚠️', indicator: 'scanning', text: 'Error occurred' }
+            };
+
+            const config = statusIcons[status] || statusIcons.scanning;
+            statusText.innerHTML = `<span class="indicator ${config.indicator}"></span>${config.icon} ${config.text}`;
+            statusDetail.textContent = detail;
+            state.status = status;
+        }
+
+        // Advanced object detection using multiple strategies
+        function detectObjectInHand(landmarks, imageData, imageWidth, imageHeight) {
+            const scores = {
+                gripPattern: 0,
+                fingerConfiguration: 0,
+                visualDensity: 0,
+                handStability: 0,
+                handOrientation: 0,
+                spatialOccupancy: 0
+            };
+
+            // Strategy 1: Grip Pattern Analysis (30 points)
+            scores.gripPattern = analyzeGripPattern(landmarks);
+
+            // Strategy 2: Finger Configuration (25 points)
+            scores.fingerConfiguration = analyzeFingerConfiguration(landmarks);
+
+            // Strategy 3: Visual Density in Hand Region (20 points)
+            scores.visualDensity = analyzeVisualDensity(landmarks, imageData, imageWidth, imageHeight);
+
+            // Strategy 4: Hand Stability Over Time (10 points)
+            scores.handStability = analyzeHandStability(landmarks);
+
+            // Strategy 5: Hand Orientation (10 points)
+            scores.handOrientation = analyzeHandOrientation(landmarks);
+
+            // Strategy 6: Spatial Occupancy (5 points)
+            scores.spatialOccupancy = analyzeSpatialOccupancy(landmarks);
+
+            // Calculate total confidence
+            const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
+            const confidence = Math.min(100, Math.max(0, totalScore));
+
+            // Update detection history
+            state.detectionHistory.push(confidence);
+            if (state.detectionHistory.length > 10) {
+                state.detectionHistory.shift();
+            }
+
+            // Debug info
+            if (CONFIG.DEBUG_MODE) {
+                updateDebugInfo(scores, confidence);
+            }
+
+            return {
+                hasObject: confidence >= CONFIG.OBJECT_CONFIDENCE_THRESHOLD,
+                confidence: confidence,
+                scores: scores
+            };
+        }
+
+        // Strategy 1: Analyze grip patterns (closed fist, pinch, hold)
+        function analyzeGripPattern(landmarks) {
+            let score = 0;
+            
+            const wrist = landmarks[0];
+            const thumbTip = landmarks[4];
+            const thumbBase = landmarks[2];
+            const indexTip = landmarks[8];
+            const indexBase = landmarks[5];
+            const middleTip = landmarks[12];
+            const middleBase = landmarks[9];
+            const ringTip = landmarks[16];
+            const pinkyTip = landmarks[20];
+            const palmCenter = landmarks[9];
+
+            // Check for closed grip (fist around object)
+            const fingersToCheck = [
+                { tip: indexTip, base: indexBase },
+                { tip: middleTip, base: middleBase },
+                { tip: ringTip, base: landmarks[13] },
+                { tip: pinkyTip, base: landmarks[17] }
+            ];
+
+            let curledFingers = 0;
+            fingersToCheck.forEach(finger => {
+                const tipToPalm = distance3D(finger.tip, palmCenter);
+                const baseToPalm = distance3D(finger.base, palmCenter);
+                
+                // Finger is curled if tip is closer to palm than base
+                if (tipToPalm < baseToPalm * 1.2) {
+                    curledFingers++;
+                }
+            });
+
+            // Scoring: More curled fingers = higher score
+            if (curledFingers >= 3) {
+                score += 20; // Strong grip
+            } else if (curledFingers >= 2) {
+                score += 15; // Moderate grip
+            } else if (curledFingers >= 1) {
+                score += 10; // Light grip
+            }
+
+            // Check thumb opposition (thumb touching or near other fingers)
+            const thumbToIndex = distance3D(thumbTip, indexTip);
+            const thumbToMiddle = distance3D(thumbTip, middleTip);
+            
+            if (thumbToIndex < 0.1 || thumbToMiddle < 0.1) {
+                score += 10; // Pinch grip or holding small object
+            }
+
+            return score;
+        }
+
+        // Strategy 2: Analyze finger configuration
+        function analyzeFingerConfiguration(landmarks) {
+            let score = 0;
+
+            const wrist = landmarks[0];
+            const indexTip = landmarks[8];
+            const middleTip = landmarks[12];
+            const ringTip = landmarks[16];
+            const pinkyTip = landmarks[20];
+            const indexBase = landmarks[5];
+
+            // Calculate finger spread
+            const fingerSpread = [
+                distance3D(indexTip, middleTip),
+                distance3D(middleTip, ringTip),
+                distance3D(ringTip, pinkyTip)
+            ];
+
+            const avgSpread = fingerSpread.reduce((a, b) => a + b, 0) / fingerSpread.length;
+
+            // Fingers close together suggests holding object
+            if (avgSpread < 0.08) {
+                score += 15; // Fingers grouped (holding object)
+            } else if (avgSpread < 0.12) {
+                score += 10; // Moderate grouping
+            } else if (avgSpread > 0.2) {
+                score -= 10; // Wide spread = no object (open palm)
+            }
+
+            // Check if fingers are curved (not straight)
+            const fingerCurvatures = [];
+            [[5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16], [17, 18, 19, 20]].forEach(indices => {
+                const curvature = calculateCurvature(
+                    landmarks[indices[0]], 
+                    landmarks[indices[2]], 
+                    landmarks[indices[3]]
+                );
+                fingerCurvatures.push(curvature);
+            });
+
+            const avgCurvature = fingerCurvatures.reduce((a, b) => a + b, 0) / fingerCurvatures.length;
+            
+            if (avgCurvature > 0.15) {
+                score += 10; // Curved fingers = holding
+            }
+
+            return score;
+        }
+
+        // Strategy 3: Analyze visual density (look for object pixels)
+        function analyzeVisualDensity(landmarks, imageData, imageWidth, imageHeight) {
+            if (!imageData) return 0;
+
+            let score = 0;
+
+            try {
+                // Get hand bounding box
+                const bbox = getHandBoundingBox(landmarks, imageWidth, imageHeight);
+                
+                // Sample pixels in hand region
+                const samples = 50;
+                const pixelData = [];
+
+                for (let i = 0; i < samples; i++) {
+                    const x = Math.floor(bbox.x + Math.random() * bbox.width);
+                    const y = Math.floor(bbox.y + Math.random() * bbox.height);
+                    const idx = (y * imageWidth + x) * 4;
+                    
+                    if (idx >= 0 && idx < imageData.data.length) {
+                        const r = imageData.data[idx];
+                        const g = imageData.data[idx + 1];
+                        const b = imageData.data[idx + 2];
+                        pixelData.push({ r, g, b });
+                    }
+                }
+
+                // Calculate color variance (objects have different colors than skin)
+                if (pixelData.length > 0) {
+                    const avgR = pixelData.reduce((a, p) => a + p.r, 0) / pixelData.length;
+                    const avgG = pixelData.reduce((a, p) => a + p.g, 0) / pixelData.length;
+                    const avgB = pixelData.reduce((a, p) => a + p.b, 0) / pixelData.length;
+
+                    const variance = pixelData.reduce((acc, p) => {
+                        return acc + Math.pow(p.r - avgR, 2) + 
+                               Math.pow(p.g - avgG, 2) + 
+                               Math.pow(p.b - avgB, 2);
+                    }, 0) / pixelData.length;
+
+                    // High variance suggests object with different colors
+                    if (variance > 1000) {
+                        score += 20; // High color variation = object present
+                    } else if (variance > 500) {
+                        score += 10; // Moderate variation
+                    }
+                }
+            } catch (e) {
+                // Silently fail if image analysis fails
+            }
+
+            return score;
+        }
+
+        // Strategy 4: Hand stability (hands holding objects are more stable)
+        function analyzeHandStability(landmarks) {
+            let score = 0;
+
+            if (state.lastHandPosition) {
+                const wrist = landmarks[0];
+                const movement = distance3D(wrist, state.lastHandPosition);
+
+                // Less movement = likely holding something
+                if (movement < 0.02) {
+                    score += 10; // Very stable
+                    state.stableFrameCount++;
+                } else if (movement < 0.05) {
+                    score += 5; // Moderately stable
+                    state.stableFrameCount = Math.max(0, state.stableFrameCount - 1);
+                } else {
+                    state.stableFrameCount = 0; // Reset if too much movement
+                }
+
+                // Bonus for sustained stability
+                if (state.stableFrameCount > 5) {
+                    score += 5;
+                }
+            }
+
+            state.lastHandPosition = { ...landmarks[0] };
+            return score;
+        }
+
+        // Strategy 5: Hand orientation (certain orientations suggest holding)
+        function analyzeHandOrientation(landmarks) {
+            let score = 0;
+
+            const wrist = landmarks[0];
+            const middleBase = landmarks[9];
+            const middleTip = landmarks[12];
+
+            // Calculate hand angle
+            const dx = middleBase.x - wrist.x;
+            const dy = middleBase.y - wrist.y;
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+            // Normalize angle to 0-360
+            const normalizedAngle = (angle + 360) % 360;
+
+            // Natural holding positions are usually not completely vertical or horizontal
+            // Angles between 30-150 or 210-330 are more likely holding positions
+            if ((normalizedAngle > 30 && normalizedAngle < 150) || 
+                (normalizedAngle > 210 && normalizedAngle < 330)) {
+                score += 10;
+            }
+
+            // Check if hand is facing camera (z-depth variation)
+            const depthVariation = Math.abs((middleTip.z || 0) - (wrist.z || 0));
+            if (depthVariation > 0.05) {
+                score += 5; // Hand rotated = possibly showing object
+            }
+
+            return score;
+        }
+
+        // Strategy 6: Spatial occupancy (objects take up space)
+        function analyzeSpatialOccupancy(landmarks) {
+            let score = 0;
+
+            // Calculate hand volume (rough estimate)
+            const points = landmarks.slice(0, 21);
+            let minX = 1, maxX = 0, minY = 1, maxY = 0, minZ = 1, maxZ = -1;
+
+            points.forEach(p => {
+                minX = Math.min(minX, p.x);
+                maxX = Math.max(maxX, p.x);
+                minY = Math.min(minY, p.y);
+                maxY = Math.max(maxY, p.y);
+                minZ = Math.min(minZ, p.z || 0);
+                maxZ = Math.max(maxZ, p.z || 0);
+            });
+
+            const volume = (maxX - minX) * (maxY - minY) * (maxZ - minZ);
+
+            // Larger volume suggests object in hand
+            if (volume > 0.01) {
+                score += 5;
+            }
+
+            return score;
+        }
+
+        // Helper: Calculate 3D distance
+        function distance3D(point1, point2) {
+            const dx = point1.x - point2.x;
+            const dy = point1.y - point2.y;
+            const dz = (point1.z || 0) - (point2.z || 0);
+            return Math.sqrt(dx * dx + dy * dy + dz * dz);
+        }
+
+        // Helper: Calculate curvature
+        function calculateCurvature(p1, p2, p3) {
+            const d1 = distance3D(p1, p2);
+            const d2 = distance3D(p2, p3);
+            const d3 = distance3D(p1, p3);
+            
+            // Using triangle inequality to measure curvature
+            return Math.abs((d1 + d2) - d3);
+        }
+
+        // Get expanded bounding box for object
+        function getHandBoundingBox(landmarks, imageWidth, imageHeight) {
+            let minX = 1, minY = 1, maxX = 0, maxY = 0;
+
+            landmarks.forEach(landmark => {
+                minX = Math.min(minX, landmark.x);
+                minY = Math.min(minY, landmark.y);
+                maxX = Math.max(maxX, landmark.x);
+                maxY = Math.max(maxY, landmark.y);
+            });
+
+            // Add generous padding for objects that extend beyond hand
+            const padding = 0.9; // Increased from 0.3 to 0.6 for larger capture area
+            const width = maxX - minX;
+            const height = maxY - minY;
+            
+            minX = Math.max(0, minX - width * padding);
+            minY = Math.max(0, minY - height * padding);
+            maxX = Math.min(1, maxX + width * padding);
+            maxY = Math.min(1, maxY + height * padding);
+
+            return {
+                x: Math.floor(minX * imageWidth),
+                y: Math.floor(minY * imageHeight),
+                width: Math.floor((maxX - minX) * imageWidth),
+                height: Math.floor((maxY - minY) * imageHeight)
+            };
+        }
+
+        // Crop image
+        function cropHandImage(boundingBox) {
+            const cropCanvas = document.createElement('canvas');
+            cropCanvas.width = boundingBox.width;
+            cropCanvas.height = boundingBox.height;
+            const cropCtx = cropCanvas.getContext('2d');
+
+            cropCtx.drawImage(
+                videoElement,
+                boundingBox.x, boundingBox.y,
+                boundingBox.width, boundingBox.height,
+                0, 0,
+                boundingBox.width, boundingBox.height
+            );
+
+            return cropCanvas.toDataURL('image/jpeg', 0.8);
+        }
+
+        // Show preview
+        function showCroppedPreview(imageData) {
+            const img = new Image();
+            img.onload = () => {
+                const ctx = croppedPreview.getContext('2d');
+                croppedPreview.width = 200;
+                croppedPreview.height = 200;
+                ctx.drawImage(img, 0, 0, 200, 200);
+                croppedPreview.style.display = 'block';
+            };
+            img.src = imageData;
+        }
+
+        // Update confidence display
+        function updateConfidence(confidence) {
+            confidenceBar.style.display = 'block';
+            confidenceFill.style.width = confidence + '%';
+            confidenceText.textContent = Math.round(confidence) + '%';
+        }
+
+        // Update debug info
+        function updateDebugInfo(scores, totalConfidence) {
+            debugInfo.innerHTML = `
+                <strong>Detection Scores:</strong><br>
+                Grip: ${scores.gripPattern.toFixed(1)}/30<br>
+                Fingers: ${scores.fingerConfiguration.toFixed(1)}/25<br>
+                Visual: ${scores.visualDensity.toFixed(1)}/20<br>
+                Stability: ${scores.handStability.toFixed(1)}/10<br>
+                Orientation: ${scores.handOrientation.toFixed(1)}/10<br>
+                Occupancy: ${scores.spatialOccupancy.toFixed(1)}/5<br>
+                <strong>Total: ${totalConfidence.toFixed(1)}/100</strong><br>
+                Threshold: ${CONFIG.OBJECT_CONFIDENCE_THRESHOLD}%
+            `;
+        }
+
+        // Speak result using text-to-speech
+        function speakResult(classification, itemName) {
+            // Check if browser supports speech synthesis
+            if ('speechSynthesis' in window) {
+                // Cancel any ongoing speech
+                window.speechSynthesis.cancel();
+
+                let message = '';
+                if (classification === 'Recyclable') {
+                    message = `It is recyclable. Please dispose it in green bin.`;
+                } else if (classification === 'Non-Recyclable') {
+                    message = `It is non-recyclable. Please toss in black bin.`;
+                } else {
+                    message = `Unable to classify. Please try again.`;
+                }
+
+                const utterance = new SpeechSynthesisUtterance(message);
+                utterance.rate = 0.9; // Slightly slower for clarity
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                utterance.lang = 'en-US';
+
+                console.log('🔊 Speaking:', message);
+                window.speechSynthesis.speak(utterance);
+            } else {
+                console.warn('⚠️ Speech synthesis not supported in this browser');
+            }
+        }
+
+        // Classify image
+        async function classifyImage(base64Image) {
+            updateStatus('classifying', 'Sending to Vertex AI for classification...');
+            loadingElement.classList.add('active');
+
+            try {
+                // base64Image is already in the correct format from cropHandImage()
+                console.log('🚀 Calling backend API:', CONFIG.API_ENDPOINT);
+                
+                const response = await fetch(CONFIG.API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image_base64: base64Image,
+                        location: 'smart_tv',
+                        classification_method: 'vertex_ai'
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ API Response:', errorText);
+                    throw new Error(`API error: ${response.statusText} - ${errorText}`);
+                }
+
+                const apiResult = await response.json();
+                console.log('✅ Classification result:', apiResult);
+
+                // Map API response to UI format
+                const result = {
+                    recyclable: apiResult.classification === 'Recyclable',
+                    item: apiResult.item_name || 'Unknown Item',
+                    confidence: apiResult.confidence || 0.5
+                };
+
+                // Update stats
+                updateStats(apiResult.classification, result.confidence);
+                
+                // Highlight the appropriate bin
+                highlightBin(apiResult.classification, result.confidence);
+
+                // Speak the result
+                speakResult(apiResult.classification, result.item);
+
+                updateStatus('result', `Confidence: ${(result.confidence * 100).toFixed(1)}%`);
+                resultDisplay.innerHTML = `
+                    <div>Item: <strong>${result.item}</strong></div>
+                    <div class="${result.recyclable ? 'recyclable' : 'non-recyclable'}">
+                        ${result.recyclable ? '♻️ RECYCLABLE' : '🚫 NON-RECYCLABLE'}
+                    </div>
+                    <div style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;">
+                        ${apiResult.explanation || ''}
+                    </div>
+                `;
+                resultDisplay.style.display = 'block';
+
+                setTimeout(() => {
+                    resetDetection();
+                }, 5000);
+
+                return result;
+
+            } catch (error) {
+                console.error('❌ Classification error:', error);
+                updateStatus('error', `API Error: ${error.message}. Resetting...`);
+                setTimeout(resetDetection, 3000);
+            } finally {
+                loadingElement.classList.remove('active');
+            }
+        }
+
+        // Reset detection
+        function resetDetection() {
+            state.isProcessing = false;
+            state.lastDetectionTime = Date.now();
+            state.stableFrameCount = 0;
+            state.detectionHistory = [];
+            resultDisplay.style.display = 'none';
+            croppedPreview.style.display = 'none';
+            confidenceBar.style.display = 'none';
+            updateStatus('scanning', 'Ready for next detection. Show hand with object.');
+            removeHighlightBin();
+        }
+
+        // Highlight bin when classification result received
+        function highlightBin(classification, confidence) {
+            removeHighlightBin();
+            
+            const binClass = classification.toLowerCase().replace(/[^a-z]/g, '-');
+            const binElement = document.getElementById(`${binClass}-bin`);
+            
+            if (binElement) {
+                binElement.classList.add('highlighted', binClass);
+                const confidenceEl = binElement.querySelector('.bin-confidence');
+                if (confidenceEl) {
+                    confidenceEl.textContent = `${Math.round(confidence * 100)}% Confidence`;
+                }
+            }
+        }
+
+        // Remove bin highlighting
+        function removeHighlightBin() {
+            document.querySelectorAll('.bin-item').forEach(bin => {
+                bin.classList.remove('highlighted', 'recyclable', 'non-recyclable');
+                const confidenceEl = bin.querySelector('.bin-confidence');
+                if (confidenceEl) {
+                    confidenceEl.textContent = '';
+                }
+            });
+        }
+
+        // Stats tracking
+        let stats = {
+            total: 0,
+            recyclable: 0,
+            nonRecyclable: 0,
+            totalConfidence: 0
+        };
+
+        // Update stats
+        function updateStats(classification, confidence) {
+            stats.total++;
+            stats.totalConfidence += confidence;
+            
+            if (classification === 'Recyclable') {
+                stats.recyclable++;
+            } else {
+                stats.nonRecyclable++;
+            }
+            
+            document.getElementById('stat-total').textContent = stats.total;
+            document.getElementById('stat-recyclable').textContent = stats.recyclable;
+            document.getElementById('stat-non-recyclable').textContent = stats.nonRecyclable;
+            document.getElementById('stat-accuracy').textContent = 
+                Math.round((stats.totalConfidence / stats.total) * 100) + '%';
+        }
+
+        // Update date/time
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('datetime').textContent = now.toLocaleString();
+        }
+
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // Process results
+        async function onResults(results) {
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const landmarks = results.multiHandLandmarks[0];
+
+                // Draw hand landmarks
+                drawHandLandmarks(canvasCtx, landmarks);
+
+                // Get image data for visual analysis
+                const imageData = canvasCtx.getImageData(0, 0, canvasElement.width, canvasElement.height);
+
+                // Detect object in hand
+                const detection = detectObjectInHand(landmarks, imageData, canvasElement.width, canvasElement.height);
+
+                // Update confidence display
+                updateConfidence(detection.confidence);
+
+                if (detection.hasObject) {
+                    updateStatus('objectDetected', `Confidence: ${Math.round(detection.confidence)}% - Hold steady...`);
+
+                    const timeSinceLastDetection = Date.now() - state.lastDetectionTime;
+                    if (!state.isProcessing && timeSinceLastDetection > CONFIG.DETECTION_COOLDOWN) {
+                        
+                        // Require stable detection over multiple frames
+                        const recentConfidence = state.detectionHistory.slice(-CONFIG.STABILITY_FRAMES);
+                        const avgConfidence = recentConfidence.reduce((a, b) => a + b, 0) / recentConfidence.length;
+                        
+                        if (recentConfidence.length >= CONFIG.STABILITY_FRAMES && 
+                            avgConfidence >= CONFIG.OBJECT_CONFIDENCE_THRESHOLD) {
+                            
+                            state.isProcessing = true;
+
+                            // Get bounding box and crop
+                            const bbox = getHandBoundingBox(landmarks, canvasElement.width, canvasElement.height);
+                            
+                            canvasCtx.strokeStyle = '#00FF00';
+                            canvasCtx.lineWidth = 4;
+                            canvasCtx.strokeRect(bbox.x, bbox.y, bbox.width, bbox.height);
+
+                            const croppedImage = cropHandImage(bbox);
+                            showCroppedPreview(croppedImage);
+                            await classifyImage(croppedImage);
+                        } else {
+                            updateStatus('confirming', `Confirming object presence... ${recentConfidence.length}/${CONFIG.STABILITY_FRAMES}`);
+                        }
+                    }
+                } else if (detection.confidence > 40) {
+                    updateStatus('analyzing', `Analyzing... ${Math.round(detection.confidence)}% confidence`);
+                } else {
+                    if (!state.isProcessing) {
+                        updateStatus('handDetected', 'Hand detected. Hold an object to continue.');
+                    }
+                }
+            } else {
+                if (!state.isProcessing) {
+                    updateStatus('scanning', 'No hand detected. Show hand holding object.');
+                    confidenceBar.style.display = 'none';
+                    state.detectionHistory = [];
+                    state.stableFrameCount = 0;
+                }
+            }
+
+            canvasCtx.restore();
+        }
+
+        // Draw hand landmarks
+        function drawHandLandmarks(ctx, landmarks) {
+            const connections = [
+                [0, 1], [1, 2], [2, 3], [3, 4],
+                [0, 5], [5, 6], [6, 7], [7, 8],
+                [0, 9], [9, 10], [10, 11], [11, 12],
+                [0, 13], [13, 14], [14, 15], [15, 16],
+                [0, 17], [17, 18], [18, 19], [19, 20],
+                [5, 9], [9, 13], [13, 17]
+            ];
+
+            ctx.strokeStyle = '#00FF00';
+            ctx.lineWidth = 2;
+
+            connections.forEach(([start, end]) => {
+                const startPoint = landmarks[start];
+                const endPoint = landmarks[end];
+                ctx.beginPath();
+                ctx.moveTo(startPoint.x * canvasElement.width, startPoint.y * canvasElement.height);
+                ctx.lineTo(endPoint.x * canvasElement.width, endPoint.y * canvasElement.height);
+                ctx.stroke();
+            });
+
+            ctx.fillStyle = '#FF0000';
+            landmarks.forEach(landmark => {
+                ctx.beginPath();
+                ctx.arc(
+                    landmark.x * canvasElement.width,
+                    landmark.y * canvasElement.height,
+                    5, 0, 2 * Math.PI
+                );
+                ctx.fill();
+            });
+        }
+
+        // Check for secure context
+        function checkSecureContext() {
+            if (!window.isSecureContext) {
+                const protocol = window.location.protocol;
+                const host = window.location.host;
+                
+                let message = '⚠️ CAMERA ACCESS REQUIRES SECURE CONNECTION!\n\n';
+                let solution = '';
+                
+                if (protocol === 'file:') {
+                    message += '❌ Problem: Using file:// protocol\n\n';
+                    solution = '✅ SOLUTION:\n' +
+                              '1. Start a web server:\n' +
+                              '   python3 -m http.server 8000\n\n' +
+                              '2. Open browser to:\n' +
+                              '   http://localhost:8000/recycle-detector.html';
+                } else if (protocol === 'http:' && !host.includes('localhost') && !host.includes('127.0.0.1')) {
+                    message += '❌ Problem: Using HTTP with IP address\n\n';
+                    solution = '✅ SOLUTION 1 (Easiest):\n' +
+                              '   Access via: http://localhost:8000/\n\n' +
+                              '✅ SOLUTION 2 (For Smart TV):\n' +
+                              '   Use HTTPS or ngrok (see documentation)';
+                }
+                
+                console.error('=== SECURITY ERROR ===');
+                console.error('Protocol:', protocol);
+                console.error('Host:', host);
+                console.error('Secure Context:', window.isSecureContext);
+                console.error('=====================');
+                
+                updateStatus('error', solution);
+                statusDetail.innerHTML = message.replace(/\n/g, '<br>');
+                
+                // Create alert box
+                const alertDiv = document.createElement('div');
+                alertDiv.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(255, 0, 0, 0.95);
+                    color: white;
+                    padding: 30px;
+                    border-radius: 15px;
+                    max-width: 600px;
+                    z-index: 10000;
+                    font-size: 1.2em;
+                    text-align: left;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+                `;
+                alertDiv.innerHTML = `
+                    <h2 style="margin-top:0;">🔒 Security Error</h2>
+                    <p style="white-space: pre-wrap;">${message}</p>
+                    <p style="white-space: pre-wrap; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-family: monospace;">${solution}</p>
+                    <button onclick="this.parentElement.remove()" style="
+                        background: white;
+                        color: #f44336;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 1em;
+                        margin-top: 15px;
+                    ">Close</button>
+                `;
+                document.body.appendChild(alertDiv);
+                
+                return false;
+            }
+            return true;
+        }
+
+        // Check for getUserMedia support
+        function checkCameraSupport() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                const message = '⚠️ CAMERA API NOT AVAILABLE!\n\n' +
+                               'Possible reasons:\n' +
+                               '1. Not using HTTPS or localhost\n' +
+                               '2. Browser doesn\'t support camera\n' +
+                               '3. Camera blocked by settings\n\n' +
+                               'Current URL: ' + window.location.href;
+                
+                console.error('=== CAMERA API ERROR ===');
+                console.error('getUserMedia available:', !!navigator.mediaDevices?.getUserMedia);
+                console.error('Protocol:', window.location.protocol);
+                console.error('Host:', window.location.host);
+                console.error('Secure Context:', window.isSecureContext);
+                console.error('MediaDevices:', navigator.mediaDevices);
+                console.error('========================');
+                
+                updateStatus('error', 'Camera API not available - check console');
+                statusDetail.innerHTML = message.replace(/\n/g, '<br>');
+                
+                // Create alert
+                const alertDiv = document.createElement('div');
+                alertDiv.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(255, 152, 0, 0.95);
+                    color: white;
+                    padding: 30px;
+                    border-radius: 15px;
+                    max-width: 600px;
+                    z-index: 10000;
+                    font-size: 1.2em;
+                    text-align: left;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+                `;
+                alertDiv.innerHTML = `
+                    <h2 style="margin-top:0;">📹 Camera API Error</h2>
+                    <p style="white-space: pre-wrap;">${message}</p>
+                    <button onclick="this.parentElement.remove()" style="
+                        background: white;
+                        color: #ff9800;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 1em;
+                        margin-top: 15px;
+                    ">Close</button>
+                `;
+                document.body.appendChild(alertDiv);
+                
+                return false;
+            }
+            return true;
+        }
+
+        // Initialize
+        async function initializeHandDetection() {
+            // Check secure context first
+            if (!checkSecureContext()) {
+                console.error('❌ Failed: Not in secure context');
+                return;
+            }
+            
+            // Check camera support
+            if (!checkCameraSupport()) {
+                console.error('❌ Failed: Camera API not available');
+                return;
+            }
+
+            try {
+                console.log('✅ Security checks passed');
+                console.log('🎥 Initializing camera...');
+                
+                state.hands = new Hands({
+                    locateFile: (file) => {
+                        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                    }
+                });
+
+                state.hands.setOptions({
+                    maxNumHands: 1,
+                    modelComplexity: 1,
+                    minDetectionConfidence: CONFIG.HAND_CONFIDENCE,
+                    minTrackingConfidence: CONFIG.HAND_CONFIDENCE
+                });
+
+                state.hands.onResults(onResults);
+
+                state.camera = new Camera(videoElement, {
+                    onFrame: async () => {
+                        await state.hands.send({ image: videoElement });
+                    },
+                    width: CONFIG.VIDEO_WIDTH,
+                    height: CONFIG.VIDEO_HEIGHT
+                });
+
+                await state.camera.start();
+
+                canvasElement.width = CONFIG.VIDEO_WIDTH;
+                canvasElement.height = CONFIG.VIDEO_HEIGHT;
+
+                console.log('✅ Camera initialized successfully');
+                updateStatus('scanning', 'Camera ready! Show hand holding object to detect.');
+
+            } catch (error) {
+                console.error('❌ Initialization error:', error);
+                
+                let errorMsg = 'Failed to initialize camera';
+                if (error.name === 'NotAllowedError') {
+                    errorMsg = 'Camera permission denied. Please allow camera access.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMsg = 'No camera found. Please connect a camera.';
+                } else if (error.name === 'NotReadableError') {
+                    errorMsg = 'Camera is in use by another application.';
+                }
+                
+                updateStatus('error', errorMsg);
+                statusDetail.textContent = error.message;
+            }
+        }
+
+        window.addEventListener('load', () => {
+            initializeHandDetection();
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (state.camera) state.camera.stop();
+        });
+    </script>
+</body>
+</html>

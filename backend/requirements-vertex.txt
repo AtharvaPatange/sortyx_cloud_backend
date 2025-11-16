@@ -1,0 +1,27 @@
+# FastAPI Web Framework
+fastapi==0.115.4
+uvicorn[standard]==0.32.0
+python-dotenv==1.0.1
+pydantic==2.9.2
+
+# Computer Vision & Image Processing
+opencv-python-headless==4.10.0.84
+Pillow==11.0.0
+numpy==2.1.3
+
+# YOLO Object Detection
+ultralytics==8.3.24
+torch==2.5.1
+torchvision==0.20.1
+
+# Vertex AI (Replaces google-generativeai)
+google-cloud-aiplatform==1.70.0
+google-auth==2.35.0
+vertexai==1.70.0
+
+# QR Code Generation
+qrcode[pil]==8.0
+
+# WebSockets
+python-multipart==0.0.12
+websockets==13.1

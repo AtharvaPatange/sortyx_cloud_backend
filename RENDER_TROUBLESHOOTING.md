@@ -1,4 +1,3 @@
-# Render Deployment Troubleshooting Guide
 
 ## 🚨 Common Render Deployment Failures & Solutions
 
@@ -294,19 +293,19 @@ Free tier apps sleep after 15 minutes of inactivity:
 
 ---
 
-## ⚠️ CRITICAL: Security Issue
+## ⚠️ CRITICAL: Security Reminder
 
-**Your `.env` file contains an exposed API key!**
+**Never commit API keys to your repository!**
 
 ```properties
-GEMINI_API_KEY="AIzaSyAxR3Q0aDKpQ66opBaaCmic6VpcCwKz8Hs"
+GEMINI_API_KEY="your_actual_api_key_here"
 ```
 
-**Action Required:**
-1. Go to Google Cloud Console
-2. **Regenerate your Gemini API key immediately**
-3. Update the new key in Render dashboard only
-4. Never commit API keys to git
+**Security Best Practices:**
+1. Keep API keys in `.env` files only (gitignored)
+2. Use environment variables in production (Render dashboard)
+3. Never hardcode keys in source code
+4. Regenerate keys immediately if exposed
 5. The `.env` file is already in `.gitignore` ✅
 
 ---
